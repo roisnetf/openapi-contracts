@@ -1,1 +1,1 @@
-# api-contracts
+# openapi-contracts
