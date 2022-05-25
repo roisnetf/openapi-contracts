@@ -1,0 +1,283 @@
+openapi: 3.1.0
+
+info:
+  title: api-markets
+  version: 1.0.0
+  summary: Manage informations related to financial markets.
+  description: Manage informations related to financial markets.
+  contact:
+    name: Florian ROISNET
+    url: 'https://www.florian-roisnet.fr'
+
+servers:
+  - url: 'http://localhost:8080'
+    description: Dev
+
+paths:
+  '/markets/forex/quotes/{currency-pair}/{time-frame}/{provider}':
+    parameters:
+      - schema:
+          type: string
+          enum:
+            - AUDUSD
+            - EURCHF
+            - EURGBP
+            - EURUSD
+            - GBPCHF
+            - GBPUSD
+            - NZDUSD
+          example: EURUSD
+          minLength: 6
+          maxLength: 6
+        name: currency-pair
+        in: path
+        description: Code of a currency pair
+        required: true
+      - schema:
+          type: string
+          enum:
+            - W1
+            - D1
+            - H4
+            - H1
+          example: H1
+          minLength: 2
+          maxLength: 3
+        name: time-frame
+        in: path
+        required: true
+        description: Code of a time frame
+      - schema:
+          type: string
+          example: ALPHA_VANTAGE
+          enum:
+            - ALPHA_VANTAGE
+        name: provider
+        in: path
+        required: true
+        description: Code of the quotes provider
+    get:
+      summary: Get Forex Quotes by Currency Pair and Time Frame
+      tags: []
+      responses:
+        '200':
+          description: Results Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetForexQuotes'
+        '400':
+          description: Bad Request or Functional Error
+        '500':
+          description: Internal Server Error
+      operationId: get-forex-quotes-currencypair-timeframe
+      description: 'Retrieve the quotes of a Forex currency pair, for a given time frame.'
+      parameters:
+        - schema:
+            type: string
+            format: date-time
+            example: '2021-06-16T06:30:00Z'
+          in: query
+          name: from-datetime
+          description: Start timestamp of the query period
+        - schema:
+            type: integer
+            format: int32
+            default: 5
+            example: 5
+            minimum: 1
+            maximum: 200
+          in: query
+          name: max-items
+          description: Max number of items expected
+        - schema:
+            type: integer
+            format: int64
+            example: 1
+            default: 1
+            minimum: 1
+          in: query
+          name: start-item
+          description: Index of the first item expected
+
+components:
+  schemas:
+    CandleOHCL:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          priceOpen: 2.22222
+          priceHigh: 3.33333
+          priceLow: 1.11111
+          priceClose: 2.88888
+      title: CandleOHCL
+      examples:
+        - open: 1.12345
+          high: 1.12345
+          close: 1.12345
+          low: 1.12345
+      properties:
+        open:
+          $ref: '#/components/schemas/Price'
+        high:
+          $ref: '#/components/schemas/Price'
+        close:
+          $ref: '#/components/schemas/Price'
+        low:
+          $ref: '#/components/schemas/Price'
+      required:
+        - open
+        - high
+        - close
+        - low
+
+    ForexQuotes:
+      title: ForexQuotes
+      type: object
+      examples:
+        - id: d4ff2cea-b66a-40ab-9f5f-b8379acf9ecd
+          currencyPair: EURUSD
+          timeFrame: H1
+          provider: ALPHA_VANTAGE
+          dateTime: '2017-07-21T16:00:00Z'
+          ohclPrices:
+            open: 1.12345
+            high: 1.12345
+            close: 1.12345
+            low: 1.12345
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d4ff2cea-b66a-40ab-9f5f-b8379acf9ecd
+        currencyPair:
+          $ref: '#/components/schemas/EnumForexCurrencyPair'
+        timeFrame:
+          $ref: '#/components/schemas/EnumForexTimeFrame'
+        provider:
+          $ref: '#/components/schemas/EnumForexProvider'
+        dateTime:
+          type: string
+          format: date-time
+          example: '2017-07-21T16:00:00Z'
+        ohclPrices:
+          $ref: '#/components/schemas/CandleOHCL'
+      required:
+        - id
+        - currencyPair
+        - timeFrame
+        - provider
+        - dateTime
+        - ohclPrices
+      description: ''
+
+    Price:
+      type: number
+      title: Price
+      format: double
+      example: 1.12345
+      minimum: 0
+
+    ResponseGetForexQuotes:
+      title: ResponseGetForexQuotes
+      type: object
+      examples:
+        - contentRange:
+            startIndex: 1
+            stopIndex: 20
+            nbTotalItems: 320
+          content:
+            - id: d4ff2cea-b66a-40ab-9f5f-b8379acf9ecd
+              currencyPair: EURUSD
+              timeFrame: H1
+              provider: ALPHA_VANTAGE
+              dateTime: '2017-07-21T16:00:00Z'
+              ohclPrices:
+                open: 1.12345
+                high: 1.12345
+                close: 1.12345
+                low: 1.12345
+      properties:
+        contentRange:
+          $ref: '#/components/schemas/ResponseContentRange'
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForexQuotes'
+      required:
+        - content
+
+    EnumForexCurrencyPair:
+      type: string
+      title: EnumForexCurrencyPair
+      enum:
+        - AUDUSD
+        - EURCHF
+        - EURGBP
+        - EURUSD
+        - GBPCHF
+        - GBPUSD
+      example: EURUSD
+      minLength: 6
+      maxLength: 6
+      examples:
+        - EURUSD
+
+    EnumForexTimeFrame:
+      type: string
+      title: EnumForexTimeFrame
+      enum:
+        - W1
+        - D1
+        - H4
+        - H1
+      example: H1
+      minLength: 2
+      maxLength: 3
+      examples:
+        - H1
+
+    EnumForexProvider:
+      type: string
+      title: EnumForexProvider
+      example: ALPHA_VANTAGE
+      examples:
+        - ALPHA_VANTAGE
+
+    ResponseContentRange:
+      title: ResponseContentRange
+      type: object
+      examples:
+        - startIndex: 1
+          stopIndex: 20
+          nbTotalItems: 320
+      properties:
+        startIndex:
+          type: integer
+          format: int64
+          example: 1
+          minimum: 1
+        stopIndex:
+          type: integer
+          format: int64
+          example: 20
+          minimum: 1
+        nbTotalItems:
+          type: integer
+          format: int64
+          example: 320
+          minimum: 0
+      required:
+        - startIndex
+        - stopIndex
+        - nbTotalItems
+
+  securitySchemes:
+    api-markets-auth-token:
+      name: API authentication key
+      type: apiKey
+      in: query
+      description: ''
+
+  responses: {}
